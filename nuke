@@ -23,7 +23,7 @@ if [ $# -gt 0 ]; then
 fi
 
 delete-rogue() {
-  e '%s' "Deleting any rouge k8s objects"
+  e '%s' "Deleting any rogue k8s objects"
 
   for i in deployment service job replicaset pod secret configmap pvc; do
     ef '- [%ss]: ' $i
