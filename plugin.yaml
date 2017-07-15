@@ -1,0 +1,7 @@
+---
+name: "nuke"
+version: "0.0.1"
+usage: "delete and purge all releases and tiller-owned objects"
+description: "delete and purge all releases and tiller-owned objects"
+useTunnel: true
+command: "$HELM_PLUGIN_DIR/nuke"
