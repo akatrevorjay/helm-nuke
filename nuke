@@ -16,12 +16,11 @@ delete-rogue() {
 
   for i in deployment service job replicaset pod secret configmap pvc; do
     ef '- [%ss]: ' $i
-    kubectl delete $i -l OWNER=TILLER
-
+    kubectl delete $i -l heritage=Tiller
   done
 
   ef '- [%ss]: ' "kube-system:configmap"
-  kubectl -n kube-system delete configmap -l OWNER=TILLER
+  kubectl -n kube-system delete configmap --selector=OWNER=TILLER
 }
 
 helm=($HELM_BIN --host $TILLER_HOST)
@@ -34,6 +33,7 @@ if [ $#releases -gt 0 ]; then
   for r in $releases; do
     printf '- %s\n' $r
   done
+  echo
 
   for r in $releases; do
     ef '- [release %s]: ' $i
