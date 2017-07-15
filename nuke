@@ -39,7 +39,7 @@ releases_raw=$(helm list --short)
 releases=(${(f)releases_raw})
 
 if [ $#releases -gt 0 ]; then
-  echo "Deleting releases:"
+  e "${fg[red]}${fg[white]} %s${reset_color} %s" "Deleting releases:" "$releases"
 
   for r in $releases; do
     printf '- %s\n' $r
@@ -47,13 +47,15 @@ if [ $#releases -gt 0 ]; then
   echo
 
   for r in $releases; do
-    echo -ne "- [release $r]: "
+    ef "[release:%s]: " $r
     $helm delete --purge $r
 
     echo -e "${fg[red]}${fg[white]} release $r deleted.${reset_color}"
   done
+  echo
 fi
 
 delete-rogue
+echo
 
 e "${fg[green]}%s" "Done!"
