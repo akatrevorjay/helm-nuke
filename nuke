@@ -11,8 +11,19 @@ e() {
   ef "$1\n" "${@:2}"
 }
 
+usage() {
+  echo "${0:t}: Nukes all releases and tiller managed k8s objects it finds afterwards."
+}
+
+if [ $# -gt 0 ]; then
+  case $1 in
+    -h|--help) usage >&2; exit 0 ;;
+    *) usage >&2; exit 1 ;;
+  esac
+fi
+
 delete-rogue() {
-  e '%s' "Deleting any rouge k8s objects" >&2
+  e '%s' "Deleting any rouge k8s objects"
 
   for i in deployment service job replicaset pod secret configmap pvc; do
     ef '- [%ss]: ' $i
@@ -28,7 +39,7 @@ releases_raw=$(helm list --short)
 releases=(${(f)releases_raw})
 
 if [ $#releases -gt 0 ]; then
-  e '%s' "Deleting all releases:" >&2
+  echo "Deleting releases:"
 
   for r in $releases; do
     printf '- %s\n' $r
@@ -36,10 +47,10 @@ if [ $#releases -gt 0 ]; then
   echo
 
   for r in $releases; do
-    ef '- [release %s]: ' $i
+    echo -ne "- [release $r]: "
     $helm delete --purge $r
 
-    e "${fg[red]}${fg[white]} Deleted release: %s" $r >&2
+    echo -e "${fg[red]}${fg[white]} release $r deleted.${reset_color}"
   done
 fi
 
