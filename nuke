@@ -40,10 +40,6 @@ releases=(${(f)releases_raw})
 
 if [ $#releases -gt 0 ]; then
   e "${fg[red]}${fg[white]} %s${reset_color} %s" "Deleting releases:" "$releases"
-
-  for r in $releases; do
-    printf '- %s\n' $r
-  done
   echo
 
   for r in $releases; do
