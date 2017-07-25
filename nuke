@@ -13,17 +13,16 @@ e() {
 
 usage() {
   echo "${0:t}: Nukes all releases and tiller managed k8s objects it finds afterwards."
-  echo "    --dry-run | -X	    Echo the commands instead of running them."
-  echo "    --help | -h		    This help."
+  echo "    --yes  | -y	    Actually delete objects instead of just showing the commands that would be ran."
+  echo "    --help | -h		This help."
 }
 
-local -U o_help=() o_dry_run=()
-zparseopts -D -K 'h=o_help' '-help=o_help' 'D=o_dry_run' '-dry-run=o_dry_run'
+local -U o_help=() o_yes=()
+zparseopts -D -K 'h=o_help' -help=o_help y=o_yes -yes=o_yes
 
-dry=()
-if [[ -n $o_dry_run ]]; then
-  echo "This is a dry run."
-  dry=(echo)
+dry=(echo)
+if [[ -n $o_yes ]]; then
+  dry=()
 fi
 
 if [[ -n $o_help ]]; then
@@ -64,6 +63,12 @@ delete-rogue() {
 helm=($dry $HELM_BIN --host $TILLER_HOST)
 releases_raw=$(helm list --short)
 releases=(${(f)releases_raw})
+
+if [[ -n $dry ]]; then
+  e "- Running in *dry* mode. Will only output the commands that would be ran."
+  e "- To actually nuke, append the --yes option."
+  echo
+fi
 
 e "Deleting releases: %s" "${releases:-<none>}"
 echo
