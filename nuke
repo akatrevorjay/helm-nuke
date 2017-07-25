@@ -13,13 +13,29 @@ e() {
 
 usage() {
   echo "${0:t}: Nukes all releases and tiller managed k8s objects it finds afterwards."
+  echo "    --dry-run | -X	    Echo the commands instead of running them."
+  echo "    --help | -h		    This help."
 }
 
-if [ $# -gt 0 ]; then
-  case $1 in
-    -h|--help) usage >&2; exit 0 ;;
-    *) usage >&2; exit 1 ;;
-  esac
+local -U o_help=() o_dry_run=()
+zparseopts -D -K 'h=o_help' '-help=o_help' 'D=o_dry_run' '-dry-run=o_dry_run'
+
+dry=()
+if [[ -n $o_dry_run ]]; then
+  echo "This is a dry run."
+  dry=(echo)
+fi
+
+if [[ -n $o_help ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $# -gt 0 ]]; then
+  echo "Error: Bad options:" "$@" >&2
+
+  usage >&2
+  exit 1
 fi
 
 delete-rogue() {
@@ -35,30 +51,33 @@ delete-rogue() {
 
     for i in deployment service job replicaset pod secret configmap pvc; do
       ef '- [%s:%ss]: ' $ns $i
-      kubectl --namespace=$ns delete $i -l heritage=Tiller &
+      $dry kubectl --namespace=$ns delete $i -l heritage=Tiller &
     done
   done
 
   ef '- [%ss]: ' "kube-system:configmap"
-  kubectl -n kube-system delete configmap --selector=OWNER=TILLER &
+  $dry kubectl -n kube-system delete configmap --selector=OWNER=TILLER &
 
   wait
 }
 
-helm=($HELM_BIN --host $TILLER_HOST)
+helm=($dry $HELM_BIN --host $TILLER_HOST)
 releases_raw=$(helm list --short)
 releases=(${(f)releases_raw})
 
-e "${fg[red]}${fg[white]} %s${reset_color} %s" "Deleting releases:" "${releases:-<none>}"
+e "Deleting releases: %s" "${releases:-<none>}"
 echo
 
 if [ $#releases -gt 0 ]; then
   for r in $releases; do
-    ef "[release:%s]: " $r
-    $helm delete --purge $r
-
-    echo -e "${fg[red]}${fg[white]} release $r deleted.${reset_color}"
+    (){
+      $helm delete --purge $r && \
+        echo -e "${fg[red]}${fg[white]} release $r deleted.${reset_color}"
+    } &
   done
+
+  wait
+
   echo
 fi
 
